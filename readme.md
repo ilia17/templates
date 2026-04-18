@@ -1,22 +1,23 @@
-# Smart Pointers Orderbook
+# Templates Orderbook
 
-A C++ orderbook implementation using a **memory pool** instead of dynamic heap allocation (`new`/`delete`). Bids and asks are stored as sorted singly-linked lists.
+A C++ orderbook implementation that replaces the separate `insert_bid` / `insert_ask` functions with a single **templated `insert` function**. The sort order (ascending or descending) is controlled by passing a comparator lambda at the call site.
 
 ## Concepts Demonstrated
 
-- **Memory pool allocation** — a fixed array of 1000 `Node` objects is pre-allocated at startup. Instead of calling `new`, nodes are handed out from this pool via `allocate()`. This avoids heap fragmentation and is faster for high-frequency use cases.
-- **Sorted linked lists** — bids are kept in descending order (highest price first), asks in ascending order (lowest price first), matching standard orderbook conventions.
-- **Manual memory management without `delete`** — since nodes come from a pool, memory is reclaimed in bulk by calling `reset_pool()`, which simply resets the pool index to 0.
+- **C++ templates** — `insert<Comparator>` is a single generic function that works for both bids and asks. The compiler generates two specialisations at compile time: one for each lambda passed in `main.cpp`.
+- **Comparator / lambda** — the caller decides the ordering by passing a lambda such as `[](double a, double b){ return a < b; }`. This makes the insert logic reusable without duplication.
+- **Memory pool allocation** — same as the previous version: a fixed array of 1000 `Node` objects is pre-allocated at startup. Nodes are handed out via `allocate()` and reclaimed in bulk via `reset_pool()`.
+- **Header-only templates** — the `insert` template must live in the header (`orderbook.h`) because the compiler needs to see the full definition at the point of instantiation.
 
 ## Project Structure
 
 ```
-smart_pointers/
+templates/
 ├── main.cpp           # Entry point — builds and prints the book
-├── orderbook.cpp      # Core logic: insert, delete, print, pool
+├── orderbook.cpp      # Pool, print, delete_level implementations
 └── headers/
     ├── node.h         # Node struct definition
-    └── orderbook.h    # Function declarations
+    └── orderbook.h    # Template insert + other function declarations
 ```
 
 ## Data Structure
@@ -33,12 +34,18 @@ struct Node {
 
 | Function | Description |
 |---|---|
-| `insert_bid(head, price, qty)` | Insert a bid in descending price order |
-| `insert_ask(head, price, qty)` | Insert an ask in ascending price order |
+| `insert(head, price, qty, comparator)` | Generic sorted insert — order determined by the comparator |
 | `delete_level(head, price)` | Remove the node matching the given price |
 | `print_book(bids, asks)` | Print all bids then all asks to stdout |
 | `reset_pool()` | Reset the memory pool (reclaim all nodes) |
 | `allocate()` | Internal — returns next free node from pool |
+
+### Comparator conventions
+
+| Side | Lambda | Order |
+|---|---|---|
+| Bids | `[](double a, double b){ return a < b; }` | Descending (highest first) |
+| Asks | `[](double a, double b){ return a > b; }` | Ascending (lowest first) |
 
 ## Build & Run
 
@@ -68,7 +75,7 @@ Ask: 100.3 Quantity: 400
 
 ## Pool Limits
 
-The pool holds a maximum of **1000 nodes**. If this limit is exceeded, the program prints an error and exits. To support more nodes, increase the pool size in `orderbook.cpp`:
+The pool holds a maximum of **1000 nodes**. If this limit is exceeded, the program prints an error and exits. To increase the limit, change the pool size in `orderbook.cpp` and the `extern` declaration in `orderbook.h`:
 
 ```cpp
 Node pool[1000]; // increase this value
