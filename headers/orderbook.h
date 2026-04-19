@@ -1,62 +1,77 @@
 #ifndef ORDERBOOK_H
 #define ORDERBOOK_H
 #include "node.h"
+#include <iostream>
 
-// pool
-extern Node pool[1000];
-extern int pool_index;
-Node* allocate();
-void reset_pool();
+class Orderbook {
+private:
+    Node pool[1000];
+    int pool_index;
+    Node* bids;
+    Node* asks;
 
-// template insert - must live in header
+    Node* allocate();
 
-template<typename Comparator>
-Node* insert(Node* head, double price, int quantity, Comparator compare) {
-    // case 0 - empty list
-    if (head == nullptr) {
+        
+    // template insert - must live in private not to be used outside the class
+    template<typename Comparator>
+    Node* insert(Node* head, double price, int quantity, Comparator compare) {
+        // case 0 - empty list
+        if (head == nullptr) {
+            Node* new_node = allocate();
+            new_node->price = price;
+            new_node->quantity = quantity;
+            new_node->next = nullptr;
+            return new_node;
+        }
+
+        // case 1 - new node becomes head
+        if (compare(head->price, price)) {
+            Node* new_node = allocate();
+            new_node->price = price;
+            new_node->quantity = quantity;
+            new_node->next = head;
+            return new_node;
+        }
+
+        // case 2 - middle
+        Node* current = head;
+        while (current->next != nullptr) {
+            if (compare(current->next->price, price)) {
+                Node* new_node = allocate();
+                new_node->price = price;
+                new_node->quantity = quantity;
+                new_node->next = current->next;
+                current->next = new_node;
+                return head;
+            }
+            current = current->next;
+        }
+
+        // case 3 - end
         Node* new_node = allocate();
         new_node->price = price;
         new_node->quantity = quantity;
         new_node->next = nullptr;
-        return new_node;
+        current->next = new_node;
+        return head;
     }
 
-    // case 1 - new node becomes head
-    if (compare(head->price, price)) {
-        Node* new_node = allocate();
-        new_node->price = price;
-        new_node->quantity = quantity;
-        new_node->next = head;
-        return new_node;
-    }
+    Node* delete_level(Node* head, double price);
 
-    // case 2 - middle
-    Node* current = head;
-    while (current->next != nullptr) {
-        if (compare(current->next->price, price)) {
-            Node* new_node = allocate();
-            new_node->price = price;
-            new_node->quantity = quantity;
-            new_node->next = current->next;
-            current->next = new_node;
-            return head;
-        }
-        current = current->next;
-    }
+public:
+    Orderbook();
+    ~Orderbook();
 
-    // case 3 - end
-    Node* new_node = allocate();
-    new_node->price = price;
-    new_node->quantity = quantity;
-    new_node->next = nullptr;
-    current->next = new_node;
-    return head;
-}
-
-
-// other functions
-void print_book(Node* bids, Node* asks);
-Node* delete_level(Node* head, double price);
-
+    Orderbook(const Orderbook&) = delete;
+    Orderbook& operator=(const Orderbook&) = delete;
+    
+    void insert_bid(double price, int quantity);
+    void insert_ask(double price, int quantity);
+    void delete_bid(double price);
+    void delete_ask(double price);
+    void print_book();
+    void reset_pool();
+};
 
 #endif

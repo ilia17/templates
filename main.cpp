@@ -1,31 +1,29 @@
 #include <iostream>
 #include "headers/orderbook.h"
-    
 
 int main() {
-    Node* bids = nullptr;
-    Node* asks = nullptr;
+
+    Orderbook book;
 
     // build the book
-    bids = insert(bids, 100.05, 200, [](double a, double b){ return a < b; });
-    bids = insert(bids, 100.10, 500, [](double a, double b){ return a < b; });
-    bids = insert(bids, 100.07, 300, [](double a, double b){ return a < b; });
-    asks = insert(asks,100.25, 150, [](double a, double b){return a>b;});
-    asks = insert(asks, 100.20, 300, [](double a, double b){return a>b;});
-    asks = insert(asks, 100.30, 400, [](double a, double b){return a>b;});
+    book.insert_bid(100.05, 200);
+    book.insert_bid(100.10, 500);
+    book.insert_bid(100.07, 300);
+
+    book.insert_ask(100.25, 150);
+    book.insert_ask(100.20, 300);
+    book.insert_ask(100.30, 400);
 
     std::cout << "--- Initial book ---\n";
-    print_book(bids, asks);
+    book.print_book();
 
     // delete a level
-    bids = delete_level(bids, 100.07);
+    book.delete_bid(100.07);
     std::cout << "\n--- After deleting bid 100.07 ---\n";
-    print_book(bids, asks);
+    book.print_book();
 
     // cleanup
-    bids = nullptr;
-    asks = nullptr;
-    reset_pool();
-    
+    book.reset_pool();
+
     return 0;
 }
