@@ -18,6 +18,7 @@ Orderbook::~Orderbook() {
 
 }
 
+
 void Orderbook::insert_bid(double price, int quantity) {
     bids = insert(bids, price, quantity, [](double a, double b){ return a < b; });
 }
