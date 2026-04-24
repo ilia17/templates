@@ -3,9 +3,12 @@
 #include "node.h"
 #include <iostream>
 
+
+
 class Orderbook {
 private:
-    Node pool[1000];
+    static const int POOL_SIZE = 1000;
+    Node pool[POOL_SIZE];
     int pool_index;
     Node* bids;
     Node* asks;
@@ -61,11 +64,12 @@ private:
 
 public:
     Orderbook();
+    Orderbook(Orderbook&& other);
     ~Orderbook();
 
     Orderbook(const Orderbook&) = delete;
     Orderbook& operator=(const Orderbook&) = delete;
-    
+    Orderbook& operator=(Orderbook&& other);
     void insert_bid(double price, int quantity);
     void insert_ask(double price, int quantity);
     void delete_bid(double price);

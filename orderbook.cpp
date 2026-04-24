@@ -2,9 +2,8 @@
 #include <iostream>
 
 Node* Orderbook::allocate() {
-    if (pool_index >= 1000) {
-        std::cerr << "Pool exhausted. Halting.\n";
-        std::exit(1);
+    if (pool_index >= POOL_SIZE) {
+        throw std::runtime_error("Pool exhausted. Halting.\n");
     }
     return &pool[pool_index++];
 }
@@ -18,12 +17,41 @@ Orderbook::~Orderbook() {
 
 }
 
+Orderbook::Orderbook(Orderbook&& other) : pool_index(other.pool_index), bids(other.bids), asks(other.asks) {
+    other.bids = nullptr;
+    other.asks = nullptr;
+    other.pool_index = 0;
+}
+
+Orderbook& Orderbook::operator=(Orderbook&& other) {
+    if (this != &other) {
+        pool_index = other.pool_index;
+        bids = other.bids;
+        asks = other.asks;
+        other.bids = nullptr;
+        other.asks = nullptr;
+        other.pool_index = 0;
+    }
+    return *this;
+}
 
 void Orderbook::insert_bid(double price, int quantity) {
+    if (price <= 0) {
+        throw std::invalid_argument("Price must be greater than 0.\n");
+    }
+    if (quantity <= 0) {
+        throw std::invalid_argument("Quantity must be greater than 0.\n");
+    }
     bids = insert(bids, price, quantity, [](double a, double b){ return a < b; });
 }
 
 void Orderbook::insert_ask(double price, int quantity) {
+    if (price <= 0) {
+        throw std::invalid_argument("Price must be greater than 0.\n");
+    }
+    if (quantity <= 0) {
+        throw std::invalid_argument("Quantity must be greater than 0.\n");
+    }
     asks = insert(asks, price, quantity, [](double a, double b){ return a > b; });
 }
 
